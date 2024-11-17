@@ -27,6 +27,7 @@ import datetime
 from clp_logging.handlers import CLPFileHandler
 from pathlib import Path
 import yaml
+import uuid
 from flask import Flask, Blueprint, jsonify
 from werkzeug.exceptions import HTTPException
 from werkzeug.serving import WSGIRequestHandler
@@ -35,7 +36,18 @@ timestamp = datetime.datetime.now()
 file_name = timestamp.strftime("%Y-%m-%d-%H-%M")
 log_dir = os.path.join(os.getcwd(), 'logs')
 os.makedirs(log_dir, exist_ok=True)
-file_path = os.path.join(log_dir, f'ictrl_{file_name}.clp.zst')
+ictrl_uuid = uuid.uuid5(uuid.uuid4(), file_name)
+file_path = os.path.join(log_dir, f'ictrl_{file_name}_{ictrl_uuid}.clp.zst')
+
+while os.path.exists(file_path):
+    # this will be changed, the name space should be the userID, and the name will be the file_name
+    # the reason to do this is so that, the uuid generated is the same given a constant name space(the same user)
+    # But it will be able to generate a different file name given the same day but a different userID
+    # However, the while loop has no point since in the extreme case, it will get into an infinite loop
+    # generating the same uuid given a constant namespace and a constant name
+    # need to look at this further
+    ictrl_uuid = uuid.uuid5(uuid.uuid4(), file_name)
+    file_path = os.path.join(log_dir, f'ictrl_{file_name}_{ictrl_uuid}.clp.zst')
 
 try:
     with open('log_config.yaml', 'r') as config_file:
