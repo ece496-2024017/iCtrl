@@ -40,12 +40,20 @@ ictrl_uuid = uuid.uuid5(uuid.uuid4(), file_name)
 file_path = os.path.join(log_dir, f'ictrl_{file_name}_{ictrl_uuid}.clp.zst')
 
 while os.path.exists(file_path):
-    # this will be changed, the name space should be the userID, and the name will be the file_name
-    # the reason to do this is so that, the uuid generated is the same given a constant name space(the same user)
-    # But it will be able to generate a different file name given the same day but a different userID
-    # However, the while loop has no point since in the extreme case, it will get into an infinite loop
-    # generating the same uuid given a constant namespace and a constant name
-    # need to look at this further
+    '''
+        uuid5 is used here
+        given a namespace, and a name, it will generate an uuid
+    
+        For the purpose to integrate uuid into the file name,
+        namespace should be the userid, name should be the file_name
+    
+        However, a corner case to consider is, there is a possibility
+        that given two different pairs of namespace and name, uuid5 can
+        generate the same userid using these two pairs, although very unlikely.
+        
+        In the demo here, the namespace is picked randomly, to ensure that the
+        generated uuid is most likely unique, as long as the world doesn't explode.
+    '''
     ictrl_uuid = uuid.uuid5(uuid.uuid4(), file_name)
     file_path = os.path.join(log_dir, f'ictrl_{file_name}_{ictrl_uuid}.clp.zst')
 
