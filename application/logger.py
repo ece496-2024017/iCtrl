@@ -1,24 +1,27 @@
 import os
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4, UUID
+
 from clp_logging.handlers import CLPFileHandler, CLPLogLevelTimeout, EOF_CHAR, FLUSH_FRAME
 from datetime import datetime
 
+
 class RotatingCLPFileHandler(CLPFileHandler):
     """
-    Extends `CLPFileHandler` to support file size-based log rotation.
+        Extends `CLPFileHandler` to support file size-based log rotation.
     """
 
     def __init__(
-        self,
-        filename_prefix: str,
-        log_dir: Path,
-        max_bytes: int,
-        backup_count: int = 5,
-        mode: str = "ab",
-        enable_compression: bool = True,
-        timestamp_format: str = "%Y%m%d_%H%M%S",
-        loglevel_timeout: Optional[CLPLogLevelTimeout] = None,
+            self,
+            filename_prefix: str,
+            log_dir: Path,
+            max_bytes: int,
+            backup_count: int = 5,
+            mode: str = "ab",
+            enable_compression: bool = True,
+            timestamp_format: str = "%Y%m%d_%H%M%S",
+            loglevel_timeout: Optional[CLPLogLevelTimeout] = None,
     ) -> None:
         self.filename_prefix = filename_prefix
         self.log_dir = Path(log_dir)
@@ -39,16 +42,12 @@ class RotatingCLPFileHandler(CLPFileHandler):
             timestamp_format=timestamp_format,
             loglevel_timeout=loglevel_timeout,
         )
-    
+
     def _generate_log_filename(self) -> Path:
         """
         Generate a log filename with the timestamp and prefix.
         """
-        start_time = datetime.now()
-        timestamp = start_time.strftime(self.timestamp_format)
-        self.current_log_file = Path(f"{self.log_dir}/{self.filename_prefix}_{timestamp}.clp.zst")
-
-        return self.current_log_file
+        return generate_log_filename()[0]
 
     def _should_rotate(self) -> bool:
         """
@@ -58,7 +57,6 @@ class RotatingCLPFileHandler(CLPFileHandler):
             return self.current_log_file.stat().st_size >= self.max_bytes
         except FileNotFoundError:
             return False
-
 
     def _rotate(self) -> None:
         """
@@ -126,3 +124,33 @@ class RotatingCLPFileHandler(CLPFileHandler):
         if self._should_rotate():
             self._rotate()
         super()._write(loglevel, msg)
+
+
+def generate_log_filename() -> (Path, UUID):
+    """
+        Generate a log filename with the timestamp and prefix.
+    """
+
+    timestamp = datetime.now()
+    file_name = timestamp.strftime("%Y%m%d_%H%M%S")
+    log_dir = os.path.join(os.getcwd(), 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    uuid = uuid4()
+    uuid_str = str(uuid)
+
+    START_AND_INCREMENT_AMOUNT = 1
+    num_of_uuid_digits = START_AND_INCREMENT_AMOUNT
+
+    while True:
+        file_path = os.path.join(log_dir, f'ictrl_{file_name}_{uuid_str[:num_of_uuid_digits]}.clp.zst')
+
+        if not os.path.exists(file_path):
+            return file_path, uuid
+
+        if num_of_uuid_digits > len(uuid_str):
+            uuid = uuid4()
+            uuid_str = str(uuid)
+            num_of_uuid_digits = START_AND_INCREMENT_AMOUNT
+            continue
+
+        num_of_uuid_digits += START_AND_INCREMENT_AMOUNT
